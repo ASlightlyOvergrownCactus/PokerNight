@@ -1,0 +1,12 @@
+{
+	"id": "cactus.poker",
+	"name": "Poker Night at Rainworld",
+	"version": "0.0",
+	"hide_version": false,
+	"authors": "Cactus",
+	"description": "gamble!!! (replace with actual desc later)",
+	"requirements": [],
+	"requirements_names": [],
+	"checksum_override_version": false,
+	"tags": [ "Game Modes" ]
+}
