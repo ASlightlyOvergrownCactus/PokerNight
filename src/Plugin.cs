@@ -36,6 +36,7 @@ sealed class Plugin : BaseUnityPlugin
         try
         {
             Debug.Log("haiiiiiiii :3");
+            PokerDoor.__RegisterPokerDoor();
         }
         catch (Exception e)
         {
