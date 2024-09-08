@@ -1,4 +1,7 @@
-﻿namespace PokerNight;
+﻿using System.Linq;
+using On.MoreSlugcats;
+
+namespace PokerNight;
 
 using DevInterface;
 using System.Collections.Generic;
@@ -9,6 +12,8 @@ using static Pom.Pom;
 
 public static class PokerDoor
 {
+	public static readonly float spriteWidth = 53; // Change upon changing sprite for door.
+	public static readonly float spriteheight = 62; // Change upon changing sprite for door.
     internal class PokerData : ManagedData
     {
         [StringField("room", "HI_C04")]
@@ -95,7 +100,7 @@ public static class PokerDoor
 			public override void AddToContainer(RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer? newContainer)
 			{
 				base.AddToContainer(sLeaser, rCam, newContainer);
-				if (newContainer == null) newContainer = rCam.ReturnFContainer("HUD");
+				if (newContainer == null) newContainer = rCam.ReturnFContainer("Midground");
 				for (int i = 0; i < sLeaser.sprites.Length; i++)
 				{
 					newContainer.AddChild(sLeaser.sprites[i]);
@@ -107,11 +112,7 @@ public static class PokerDoor
 				base.ApplyPalette(sLeaser, rCam, palette);
 				for (int i = 0; i < sLeaser.sprites.Length; i++)
 				{
-					sLeaser.sprites[i].color = PlayerGraphics.SlugcatColor(new[]
-					{
-						SlugcatStats.Name.Yellow, SlugcatStats.Name.White, SlugcatStats.Name.Red,
-						SlugcatStats.Name.Night
-					}[UnityEngine.Random.Range(0, 4)]);
+					sLeaser.sprites[i].color = Color.white;
 				}
 			}
 
@@ -123,7 +124,6 @@ public static class PokerDoor
 					sLeaser.sprites[i]
 						.SetPosition(this.placedObject.pos - camPos);
 					sLeaser.sprites[i].scale = ((DoorData)this.placedObject.data).GetValue<float>("scale");
-					sLeaser.sprites[i].rotation = ((DoorData)this.placedObject.data).rotation;
 					Color clr = sLeaser.sprites[i].color;
 					sLeaser.sprites[i].color = clr;
 				}
@@ -136,9 +136,35 @@ public static class PokerDoor
 				for (int i = 0; i < sLeaser.sprites.Length; i++)
 				{
 					sLeaser.sprites[i] = new FSprite("Circle20");
+					sLeaser.sprites[i].element = Plugin.elements[0];
 				}
 
 				AddToContainer(sLeaser, rCam, null);
+			}
+
+			public override void Update(bool eu)
+			{
+				base.Update(eu);
+				if (room.PlayersInRoom.Count > 0)
+				{
+					if (AABBRectCheck(room.PlayersInRoom.First().bodyChunks[0].pos) && room.PlayersInRoom[0].input[0].jmp)
+					{
+						Debug.Log("teleport NOW!!!"); // Add room working with POM input
+						Player player1 = room.PlayersInRoom[0];
+						MoreSlugcats.MSCRoomSpecificScript.RoomWarp(room.PlayersInRoom[0], room, "SL_F01", default, false);
+						
+					}
+				}
+			}
+			
+			public bool AABBRectCheck(Vector2 point) // Change dimensions of poker door when we get actual door sprite
+			{
+				Vector2 topLeft = placedObject.pos - new Vector2(spriteWidth / 2f, spriteheight / -2f);
+				Vector2 topRight = placedObject.pos - new Vector2(spriteWidth / -2f, spriteheight / -2f);
+				Vector2 bottomLeft = placedObject.pos - new Vector2(spriteWidth / 2f, spriteheight / 2f);
+				Vector2 bottomRight = placedObject.pos - new Vector2(spriteWidth / -2f, spriteheight / 2f);
+
+				return (point.x >= topLeft.x && point.x <= topRight.x && point.y >= bottomLeft.y && point.y <= topRight.y);
 			}
 		}
 
@@ -146,7 +172,6 @@ public static class PokerDoor
 		// We declare a managed field called "scale" in the base constructor,
 		// and another one called "red" that is tied to an actual field that can be accessed directly
 		// some more managed fields that arent used for anything
-		// and we create another one called rotation that we manage on our own
 		class DoorData : ManagedData
 		{
 #pragma warning disable 0649 // We're reflecting over these fields, stop worrying about it stupid compiler
@@ -177,19 +202,16 @@ public static class PokerDoor
 					displayName: "What sound a bat makes"),
 			};
 
-			// that one field we didn't want to use the framework for, for whatever reason
-			public float rotation;
-
 			public DoorData(PlacedObject owner) : base(owner, customFields)
 			{
-				this.rotation = UnityEngine.Random.value * 360f;
+
 			}
 
 			// Serialization has to include our manual field
 			public override string ToString()
 			{
 				//Debug.Log("CuriousData serializing as " + base.ToString() + "~" + rotation);
-				return base.ToString() + "~" + rotation;
+				return base.ToString() + "~" + 30f; // placeholder
 			}
 
 			public override void FromString(string s)
@@ -199,7 +221,7 @@ public static class PokerDoor
 				string[] arr = Regex.Split(s, "~");
 				try
 				{
-					rotation = float.Parse(arr[base.FieldsWhenSerialized + 0]);
+
 				}
 				catch
 				{
@@ -220,9 +242,9 @@ public static class PokerDoor
 			public override void Update()
 			{
 				base.Update();
-				if (UnityEngine.Input.GetKey("b")) return;
-				(pObj.data as DoorData)!.rotation = RWCustom.Custom.VecToDeg(this.owner.mousePos - absPos);
 			}
+
+			
 		}
 	}
 }
